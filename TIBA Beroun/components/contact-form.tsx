@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import ReCAPTCHA from "react-google-recaptcha"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -8,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 
-type Errors = Partial<Record<"name" | "surname" | "email" | "phone" | "consent" | "atLeastOne", string>>
+type Errors = Partial<Record<"name" | "surname" | "email" | "phone" | "consent" | "atLeastOne" | "captcha", string>>
 
 export function ContactForm() {
   const { toast } = useToast()
@@ -25,6 +26,9 @@ export function ContactForm() {
   const [loading, setLoading] = React.useState(false)
   const [errors, setErrors] = React.useState<Errors>({})
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null)
+
+  const [captchaToken, setCaptchaToken] = React.useState<string | null>(null)
+
 
   const interestOptions = ["1+kk", "2+kk", "3+kk", "4+kk"]
   const timeOptions = ["9-12 hodin", "12-15 hodin", "15-18 hodin"]
@@ -49,6 +53,7 @@ export function ContactForm() {
     if (!email.trim() && !phone.trim()) {
       e.atLeastOne = "Zadejte alespoň e‑mail nebo telefon."
     }
+    if (!captchaToken) e.captcha = "Prosím, ověřte, že nejste robot."
     if (email.trim()) {
       // naive email regex for basic validation
       const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
@@ -357,7 +362,15 @@ export function ContactForm() {
           </p>
         ) : null}
       </div>
-
+      <div className="my-4">
+        <ReCAPTCHA
+          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+          onChange={(token: string) => setCaptchaToken(token)}
+        />
+        {!captchaToken && errors.captcha && (
+          <p className="text-sm text-destructive mt-1">{errors.captcha}</p>
+        )}
+      </div>
       <Button
         type="submit"
         className=" bg-primary text-primary-foreground hover:bg-primary/90 h-11"
